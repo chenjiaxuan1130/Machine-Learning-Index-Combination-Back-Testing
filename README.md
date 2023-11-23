@@ -13,7 +13,7 @@ This is for analyzing how different factors effect the restricted stock price af
 2.3. Non-linear regression
 4. forecast the maximum drawdown and build a potential stock pool.
 
-# Some part of the code is kept secret.
+# !!! Some part of the code is kept secret
 
 Because it is relavent to some certain strategies.
 
