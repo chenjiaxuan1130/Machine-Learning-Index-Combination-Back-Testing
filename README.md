@@ -2,7 +2,7 @@
 
 Hi! Nice to see you here!
 
-This is desgined for:
+This is for analyzing how different factors effect the restricted stock price after holding periods.
 
 # Construction
 
@@ -10,11 +10,11 @@ This is desgined for:
 2. selecting the index combination with the best accuracy with different machine learning methods
 2.1. random forest (classification)
 2.2. random forest (regression)
-2.3.
+2.3. Non-linear regression
 
 # Some part of the code is kept secret.
 
-Because it is relavent to some strategy.
+Because it is relavent to some certain strategies.
 
 # Notes
 
