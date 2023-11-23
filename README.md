@@ -8,10 +8,10 @@ This is for analyzing how different factors effect the restricted stock price af
 
 1. data cleaning
 2. selecting the index combination with the best accuracy with different machine learning methods
-2.1. random forest (classification)
-2.2. random forest (regression)
+2.1. random forest (regression)
+2.2. K-MEANS classification
 2.3. Non-linear regression
-3. forecast the maximum drawdown and build a potential stock pool
+4. forecast the maximum drawdown and build a potential stock pool.
 
 # Some part of the code is kept secret.
 
