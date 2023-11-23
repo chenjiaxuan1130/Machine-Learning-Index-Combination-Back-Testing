@@ -1,0 +1,162 @@
+import datetime
+import pandas as pd
+import openpyxl
+import numpy as np
+import matplotlib.pylab as plt
+import seaborn as sns
+from pandas import DataFrame
+
+# for Random Forest
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score
+
+# for Non-Linear Regression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import Lasso, Ridge, LinearRegression as LR
+
+# for K-MEAN
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
+from sklearn import metrics
+
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import itertools
+
+##################### data cleaning #####################
+
+past = pd.read_excel(r'C:/Users/chenjx/Desktop/xxxxxpast.xlsx',header=1)
+# some code need to be kept secret
+
+##################### random forest (regression) #####################
+
+# train the model
+x=past.loc[:,['var1','var2','var3','var4','var5','var6','var7','var8','var9,'var10','var11','var12','var13','var14']]
+y=past.loc[:,['drawdown']]
+
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.1,random_state=None)
+
+# standerlization
+sc= StandardScaler()
+x_train = sc.fit_transform(x_train)
+x_test=sc.transform(x_test)
+
+# regression
+regressor = RandomForestRegressor(n_estimators=600, random_state=66)
+regressor.fit(x_train, y_train)
+y_pred=regressor.predict(x_test)
+
+# result
+for i, feature in enumerate(x.columns):
+    v="{}*{}+".format(regressor.feature_importances_[i],feature)
+    function=function+v
+with open("C:/Users/chenjx/Desktop/result_rfr.txt","w") as f:
+    f.write('drawdown')
+    f.write('\n')
+    f.write('std var:'+str(mean_squared_error(y_test,y_pred)))
+    f.write('\n')
+    f.write('R square:'+str(r2_score(y_test,y_pred)))
+    f.write('\n')
+    f.write('\n')
+    f.write('\n')
+
+#prediction
+row = pd.read_excel(r'C:/Users/chenjx/Desktop/xxxxxfuture.xlsx',header=0)
+xrow=row[['drawdown','var1','var2','var3','var4','var5','var6','var7','var8','var9,'var10','var11','var12','var13','var14']]
+x_future=xrow.iloc[:,1:]
+sc= StandardScaler()
+x_future = sc.fit_transform(x_future)
+x_future=sc.transform(x_future)
+xrow['dd_hat']=regressor.predict(x_future)
+
+xrow.to_excel(r'C:/Users/chenjx/Desktop/xxxxxprediction_rfr.xlsx')
+
+##################### k-means #####################
+
+kdata=past[['var1','var2','var3','var4','var5','var6','var7','var8','var9,'var10','var11','var12','var13','var14']]
+normalized = kdata.apply(lambda x : (x-np.min(x))/(np.max(x)-np.min(x)))
+
+# define the number of cluster
+
+## method 1: meanabsolute deviation+ Elbow method
+K = range(1,18)
+meanDispersions=[]
+for k in K:
+    kemeans=KMeans(n_clusters=k, init='k-means++')
+    kemeans.fit(normalized)
+    m_disp=sum(np.min(cdist(normalized,kemeans.cluster_centers_,'euclidean'),axis=1))/normalized.shape[0]
+    meanDispersions.append((m_disp))
+
+plt.plot(K, meanDispersions,'bx-')
+plt.show()
+
+## method 2: Silhouette Coefficient
+K=range(2,10)
+S=[]
+
+for k in K:
+    kmeans=KMeans(n_clusters=k)
+    kmeans.fit(normalized)
+    labels=kmeans.labels_
+    S.append(metrics.silhouette_score(normalized,labels,metric='euclidean'))
+plt.plot(K,S,'b*-')
+plt.show()
+
+# clustering
+
+kms=KMeans(n_clusters=4,init='k-means++')
+data_fig=kms.fit(normalized)
+centers=kms.cluster_centers_
+labs=kms.labels_
+df_labels= DataFrame(kms.labels_)
+
+df_A_0=normalized[kms.labels_==0]
+df_A_1=normalized[kms.labels_==1]
+df_A_2=normalized[kms.labels_==2]
+df_A_3=normalized[kms.labels_==3]
+m=np.shape(df_A_0)[1]
+df_A_0.insert(df_A_0.shape[1],'label',0)
+df_A_1.insert(df_A_1.shape[1],'label',1)
+df_A_2.insert(df_A_2.shape[1],'label',2)
+df_A_3.insert(df_A_3.shape[1],'label',3)
+labeldata=pd.concat([df_A_0,df_A_1,df_A_2,df_A_3])
+labeldata.to_excel('C:/Users/chenjx/Desktop/xxxxx_cluster_results.xlsx')
+df_centers=DataFrame(centers)
+df_centers.to_excel('C:/Users/chenjx/Desktop/xxxxx_cluster_centers.xlsx')
+
+##################### non-linear regression #####################
+
+po = PolynomialFeatures(degree=2, interaction_only=False,include_bias=False)
+x=past.loc[:,['var1','var2','var3','var4','var5','var6','var7','var8','var9,'var10','var11','var12','var13','var14']]
+y=past.loc[:,['drawdown']]
+x_poly= po.fit_transform(x)
+
+x_train, x_test, y_train, y_test = train_test_split(x_poly,y,test_size=0.1,random_state=None)
+reg=LR().fit(x_train,y_train)
+yhat=reg.predict(x_test)
+
+with open("C:/Users/chenjx/Desktop/private_placement_forcast/FINAL/nonlinear-result.txt","w") as f:
+    f.write('drawdown')
+    f.write('\n')
+    f.write('std var:'+str(mean_squared_error(yhat,y_test)))
+    f.write('\n')
+    f.write('R square:'+str(r2_score(y_test,yhat)))
+    f.write('\n')
+    f.write('\n')
+    f.write('\n')
+
+#prediction
+
+row = pd.read_excel(r'C:/Users/chenjx/Desktop/xxxxxfuture.xlsx',header=0)
+row=row.drop(row[row.市值==0].index)
+
+xrow=row[['var1','var2','var3','var4','var5','var6','var7','var8','var9,'var10','var11','var12','var13','var14']]
+
+x_future=xrow.iloc[:,1:]
+x_futurepoly= po.fit_transform(x_future)
+x_futurepoly=pd.DataFrame(x_futurepoly)
+xrow['dd_pred']=reg.predict(x_futurepoly)
+
+xrow.to_excel(r'C:/Users/chenjx/Desktop/xxxxx_nlr.xlsx')
